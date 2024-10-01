@@ -1,0 +1,90 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+carbon_emission=pd.read_csv("C:\\Users\\KRISHNAMIDULA K\\OneDrive\\New folder\\Carbon_emission_data.csv")
+transport_data=pd.read_csv("C:\\Users\\KRISHNAMIDULA K\\OneDrive\\New folder\\Employee_transport_data.csv")
+
+
+
+
+
+df_transport = pd.DataFrame(carbon_emission)
+df_emission = pd.DataFrame(transport_data)
+
+
+def process_transport_data(row):
+    transport_data = row['Transport Mode Used'].split(',')
+    emissions = {}
+    
+    for item in transport_data:
+        mode, distance = item.split(':')
+        distance_km = float(distance[:-2]) 
+        
+       
+        emission_rate = df_emission.loc[df_emission['Country'] == row['Country'] & 
+                                          (df_emission['Transport Mode'] == mode), 
+                                          'Carbon Emission'].values
+        
+        if emission_rate.size > 0:
+            emissions[mode] = distance_km * emission_rate[0]  
+    
+    return pd.Series(emissions)
+
+
+emission_df = df_transport.apply(process_transport_data, axis=1)
+emission_df['Total Emissions'] = emission_df.sum(axis=1)
+
+
+df_transport = pd.concat([df_transport, emission_df], axis=1)
+
+
+emissions_per_country = df_transport.groupby('Country')['Total Emissions'].sum().reset_index()
+plt.figure(figsize=(10, 6))
+sns.barplot(data=emissions_per_country, x='Country', y='Total Emissions')
+plt.title('Total Emissions per Country')
+plt.ylabel('Total Emissions (kg)')
+plt.xlabel('Country')
+plt.show()
+
+
+yearly_emissions = df_transport.groupby(['Year', 'Country'])['Total Emissions'].sum().reset_index()
+plt.figure(figsize=(10, 6))
+sns.lineplot(data=yearly_emissions, x='Year', y='Total Emissions', hue='Country')
+plt.title('Yearly Emissions per Country')
+plt.ylabel('Total Emissions (kg)')
+plt.xlabel('Year')
+plt.show()
+
+
+mode_emissions = df_transport.drop(columns=['Employee Name', 'Country', 'Year']).sum().reset_index()
+mode_emissions.columns = ['Transport Mode', 'Total Emissions']
+mode_emissions['Percentage'] = mode_emissions['Total Emissions'] / mode_emissions['Total Emissions'].sum() * 100
+
+plt.figure(figsize=(10, 6))
+sns.barplot(data=mode_emissions, x='Transport Mode', y='Percentage')
+plt.title('Percentage of Carbon Emission by Each Transport Mode')
+plt.ylabel('Percentage (%)')
+plt.xlabel('Transport Mode')
+plt.show()
+
+
+total_emissions_by_year = df_transport.groupby('Year')['Total Emissions'].sum().reset_index()
+plt.figure(figsize=(10, 6))
+sns.barplot(data=total_emissions_by_year, x='Year', y='Total Emissions')
+plt.title('Year vs Total Emissions')
+plt.ylabel('Total Emissions (kg)')
+plt.xlabel('Year')
+plt.show()
+
+
+average_emissions_global = df_transport['Total Emissions'].mean()
+average_emissions_country = df_transport.groupby('Country')['Total Emissions'].mean().reset_index()
+
+print(f'Average Global Emission per Individual: {average_emissions_global:.2f} kg')
+
+
+print("Average Emission per Individual by Country:")
+print(average_emissions_country)
+
