@@ -1,0 +1,5 @@
+step 1: we have took 2 datasets (carbon _emission and employee transport data) and created a dataframes for 
+step 2: process for unstructured data ( we created a function called process_transport_data)and we have found out mode and distance separately for each and every record and we also updated the emmission rate
+step 3: apply the process function to each and every row 
+step 4: integrate it with the original dataframes
+step 5: we did visualization according to the queries given in the question
